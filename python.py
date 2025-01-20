@@ -1,56 +1,61 @@
-import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+import re
 
-NOTES_FILE = "notes.txt"
+TELEGRAM_BOT_TOKEN = "7722903971:AAGLv2brYFSggIc4DscNHJTxL9AsmBNHkko"
 
-def show_menu():
-    print("\nSimple Note-Taking App")
-    print("1. Create a new note")
-    print("2. View all notes")
-    print("3. Delete all notes")
-    print("4. Exit")
+def add(x, y):
+    return x + y
 
-def create_note():
-    note = input("Enter your note: ")
-    with open(NOTES_FILE, "a") as file:
-        file.write(note + "\n")
-    print("Note saved!")
+def subtract(x, y):
+    return x - y
 
-def view_notes():
-    if os.path.exists(NOTES_FILE):
-        with open(NOTES_FILE, "r") as file:
-            notes = file.readlines()
-            if notes:
-                print("\nYour Notes:")
-                for i, note in enumerate(notes, 1):
-                    print(f"{i}. {note.strip()}")
-            else:
-                print("No notes found.")
+def multiply(x, y):
+    return x * y
+
+def divide(x, y):
+    if y == 0:
+        return "Error! Division by zero."
+    return x / y
+
+async def start(update: Update, context):
+    """Handles the /start command."""
+    await update.message.reply_text("Hi! I'm a calculator bot made by Terbinos for other info click this link https://t.me/SUDOswap1 (please subscribe it). Use the format 5+3 to calculate.")
+
+async def calculator(update: Update, context):
+    """Handles calculator commands."""
+    user_input = update.message.text.strip()
+
+    pattern = r"^(\d+)\s*([+\-*/])\s*(\d+)$"
+    match = re.match(pattern, user_input)
+    
+    if match:
+        num1 = float(match.group(1))
+        operation = match.group(2)
+        num2 = float(match.group(3))
+        
+        if operation == "+":
+            result = add(num1, num2)
+        elif operation == "-":
+            result = subtract(num1, num2)
+        elif operation == "*":
+            result = multiply(num1, num2)
+        elif operation == "/":
+            result = divide(num1, num2)
+        
+        await update.message.reply_text(f"Result: {result}")
     else:
-        print("No notes found.")
-
-def delete_notes():
-    if os.path.exists(NOTES_FILE):
-        os.remove(NOTES_FILE)
-        print("All notes deleted.")
-    else:
-        print("No notes to delete.")
+        await update.message.reply_text("Usage: Enter your calculation in the form '5+3' or '10*5'")
 
 def main():
-    while True:
-        show_menu()
-        choice = input("Choose an option (1-4): ").strip()
-        
-        if choice == "1":
-            create_note()
-        elif choice == "2":
-            view_notes()
-        elif choice == "3":
-            delete_notes()
-        elif choice == "4":
-            print("Goodbye!")
-            break
-        else:
-            print("Invalid choice. Please try again.")
+    """Main function to start the bot."""
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, calculator))
+
+    print("Bot is running...")
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
